@@ -1,6 +1,5 @@
 package com.vocalis.recorder.ui.components
 
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -117,12 +116,9 @@ private val barJitter = Random(42).let { r -> FloatArray(BAR_COUNT) { 0.35f + 0.
 
 @Composable
 private fun HeroWaveform(levels: List<Float>, live: Boolean, dimmed: Boolean, modifier: Modifier) {
-    val transition = rememberInfiniteTransition(label = "wave")
-    // Read only inside the draw lambda, so the idle shimmer is a redraw, not a recomposition.
-    val phase by transition.animateFloat(
-        0f, (2 * Math.PI).toFloat(),
-        infiniteRepeatable(tween(4000, easing = LinearEasing)), label = "phase",
-    )
+    // Idle, the waveform is a still image: an endless animation would redraw 60 times a second
+    // and drain the battery while the app just sits open. While recording it redraws only
+    // when new levels arrive (~20 Hz).
     Canvas(modifier) {
         val center = BAR_COUNT / 2
         val slot = size.width / BAR_COUNT
@@ -136,7 +132,7 @@ private fun HeroWaveform(levels: List<Float>, live: Boolean, dimmed: Boolean, mo
                 val level = if (idx >= 0) levels[idx] else 0f
                 0.08f + 0.92f * sqrt(level.coerceIn(0f, 1f)) * 1.4f
             } else {
-                0.55f + 0.18f * sin(phase + i * 0.55f)
+                0.55f + 0.18f * sin(i * 0.55f)
             }
             val h = (size.height * envelope * barJitter[i] * amount.coerceAtMost(1f)).coerceAtLeast(3f)
             val redness = 1f - ((d - 0.15f) / 0.55f).coerceIn(0f, 1f)
@@ -154,14 +150,18 @@ private fun HeroWaveform(levels: List<Float>, live: Boolean, dimmed: Boolean, mo
 
 @Composable
 private fun RecordOrb(recording: Boolean, enabled: Boolean, onClick: () -> Unit, modifier: Modifier) {
-    val pulse = rememberInfiniteTransition(label = "orb")
-    // Read only in the graphics layer, so the pulse redraws without recomposing every frame.
-    val glow = pulse.animateFloat(
-        initialValue = 1f, targetValue = if (recording) 1.08f else 1.02f,
-        animationSpec = infiniteRepeatable(tween(if (recording) 800 else 2200), RepeatMode.Reverse), label = "glow",
-    )
+    // The glow pulses only while recording (as a "live" cue); idle it stays still to save battery.
+    // The value is read in the graphics layer, so the pulse redraws without recomposing.
+    val glow = if (recording) {
+        rememberInfiniteTransition(label = "orb").animateFloat(
+            initialValue = 1f, targetValue = 1.08f,
+            animationSpec = infiniteRepeatable(tween(800), RepeatMode.Reverse), label = "glow",
+        )
+    } else {
+        null
+    }
     Box(modifier.size(176.dp), contentAlignment = Alignment.Center) {
-        Canvas(Modifier.fillMaxSize().graphicsLayer { scaleX = glow.value; scaleY = glow.value }) {
+        Canvas(Modifier.fillMaxSize().graphicsLayer { val s = glow?.value ?: 1f; scaleX = s; scaleY = s }) {
             val r = size.minDimension / 2
             drawCircle(Brush.radialGradient(listOf(Vc.Red.copy(alpha = 0.20f), Color.Transparent), radius = r), r)
             drawCircle(Color(0xFF2A1219).copy(alpha = 0.9f), r * 0.82f)

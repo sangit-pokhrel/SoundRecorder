@@ -163,6 +163,7 @@ All 4 pass on the device (`am instrument`: `OK (4 tests)`).
 - **Lost audio after a crash.** The WAV reader trusted a stale header size and dropped the last seconds of an interrupted take. Found by `recordingInterruptedBeforeCloseIsStillReadable`.
 - **False breath detections in noisy rooms.** The noise-floor tracker started at -90 dB and rose too slowly, so plain room noise looked like "something above the floor". Found by `handlesLoudBreathInNoisyRoom`.
 - **Record button moving under the thumb** when the recording controls appeared. Found in manual QA on an emulator.
+- **Battery drain while idle.** Testing the minified release build showed the app using a full CPU core just sitting on the home screen: decorative animations redrew 60 times a second forever. The hero is now still when idle and animates only while recording, which took idle CPU from ~90% to 0% on the test device.
 - **Clipped labels at large system font sizes** and a "-0 dB" readout. Found in manual QA on a real phone with enlarged fonts.
 - **A UI test tapping a label instead of its button.** The test now targets the button's accessibility label, which is also what TalkBack users reach.
 
@@ -200,7 +201,7 @@ cd SoundRecorder
 ./gradlew installDebug         # installs on a connected phone (USB debugging on)
 ```
 
-Or download the APK from the latest [GitHub Actions run](https://github.com/sangit-pokhrel/SoundRecorder/actions) or [Releases](https://github.com/sangit-pokhrel/SoundRecorder/releases).
+Or grab the signed APK (~2.3 MB) from [Releases](https://github.com/sangit-pokhrel/SoundRecorder/releases). On your phone, allow "Install unknown apps" for your browser or file manager, then open the APK.
 
 ## Project structure
 
@@ -228,6 +229,7 @@ app/src/androidTest/   on-device tests
 - [ ] Optional ML voice isolation (RNNoise / DeepFilterNet via ONNX Runtime)
 - [ ] Home-screen widget and quick-settings tile for one-tap recording
 - [ ] Transcription with on-device speech recognition
+- [ ] iOS version (Compose Multiplatform UI + AVAudioEngine audio layer)
 
 ## Contributing
 
