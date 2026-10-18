@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 108 108">
+  <defs>
+    <radialGradient id="glow" cx="54" cy="54" r="54" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FF3D50" stop-opacity="0.4"/>
+      <stop offset="1" stop-color="#FF3D50" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="orb" x1="0" y1="33" x2="0" y2="75" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FF5566"/>
+      <stop offset="1" stop-color="#E0243A"/>
+    </linearGradient>
+  </defs>
+  <rect width="108" height="108" rx="24" fill="#0C0E14"/>
+  <rect width="108" height="108" rx="24" fill="url(#glow)"/>
+  <g fill="#FF3D50">
+    <rect x="23" y="51" width="3" height="6" rx="1.5"/><rect x="27.5" y="48" width="3" height="12" rx="1.5"/>
+    <rect x="77.5" y="48" width="3" height="12" rx="1.5"/><rect x="82" y="51" width="3" height="6" rx="1.5"/>
+  </g>
+  <circle cx="54" cy="54" r="21" fill="url(#orb)"/>
+  <g fill="#FFFFFF" transform="translate(54 54) scale(0.82) translate(-54 -54)">
+    <path d="M54,62c3.3,0 6,-2.7 6,-6V45c0,-3.3 -2.7,-6 -6,-6s-6,2.7 -6,6v11c0,3.3 2.7,6 6,6z"/>
+    <path d="M64.5,55.5h-3c0,4.2 -3.4,7.5 -7.5,7.5s-7.5,-3.3 -7.5,-7.5h-3c0,5.3 3.9,9.7 9,10.4V70h3v-4.1c5.1,-0.7 9,-5.1 9,-10.4z"/>
+  </g>
+</svg>

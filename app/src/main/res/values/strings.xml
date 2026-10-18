@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Vocalis</string>
+    <string name="notification_channel">Recording</string>
+    <string name="notification_recording">Recording with Vocalis</string>
+    <string name="notification_paused">Recording paused</string>
+    <string name="pause">Pause</string>
+    <string name="resume">Resume</string>
+    <string name="stop">Stop</string>
+</resources>
