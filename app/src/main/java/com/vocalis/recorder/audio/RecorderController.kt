@@ -6,7 +6,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import java.io.File
 
-enum class RecorderStatus { IDLE, RECORDING, PAUSED, FINISHING }
+/** IDLE → STARTING (opening the mic) → RECORDING ⇄ PAUSED → FINISHING (saving) → IDLE. */
+enum class RecorderStatus { IDLE, STARTING, RECORDING, PAUSED, FINISHING }
 
 data class RecorderState(
     val status: RecorderStatus = RecorderStatus.IDLE,
@@ -23,6 +24,8 @@ data class RecorderState(
     val finishingProgress: Float = 0f,
     val learningNoise: Boolean = false,
     val lastFile: File? = null,
+    /** A take was just saved and must be named before another recording can start. */
+    val awaitingName: Boolean = false,
     val error: String? = null,
 )
 
@@ -34,4 +37,14 @@ object RecorderController {
     internal fun update(transform: (RecorderState) -> RecorderState) = _state.update(transform)
 
     fun clearError() = _state.update { it.copy(error = null) }
+
+    fun finishNaming() = _state.update { it.copy(awaitingName = false) }
+
+    /** Shown immediately on tap, so the UI never looks frozen while the mic opens. */
+    fun markStarting() = _state.update { it.copy(status = RecorderStatus.STARTING, error = null) }
+
+    /** Recovers if the service never came up (e.g. the system refused to start it). */
+    fun cancelStartingIfStuck(message: String) = _state.update {
+        if (it.status == RecorderStatus.STARTING) RecorderState(lastFile = it.lastFile, error = message) else it
+    }
 }

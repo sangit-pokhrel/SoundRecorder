@@ -47,7 +47,8 @@ Everything runs **on the phone, in real time, while you record**. It's written f
 
 ## Features
 
-- **One-tap recording** with a live waveform, input meter and clip warning
+- **One-tap recording** with a live waveform, input meter and clip warning; the mic is ready in under 0.1 s, with a loader while it opens and while the take is saved
+- **Name every take before the next one.** Files are always called `Vocalis <your name>`; the "Vocalis" prefix is fixed so recordings are easy to spot in your Music folder and share sheets
 - **Live readouts** showing how much noise is being removed, how many breaths were softened and how hard the compressor is working
 - **Quick modes** (Voice Notes, Meeting, Music) plus full presets: Podcast, Voice-over, Outdoor / Vlog, Interview, Lecture, Music, Raw
 - **Every effect is adjustable**, and changes apply live, even mid-recording

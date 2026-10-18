@@ -8,6 +8,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
+import android.os.SystemClock
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
@@ -50,6 +52,7 @@ class RecorderService : LifecycleService() {
 
     private fun start() {
         if (engine != null) return
+        val startedAt = SystemClock.elapsedRealtime()
         // The microphone service type exists from Android 11; Android 10 needs no type.
         val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE else 0
         ServiceCompat.startForeground(this, NOTIFICATION_ID, buildNotification(paused = false, elapsedMs = 0), type)
@@ -80,6 +83,7 @@ class RecorderService : LifecycleService() {
             return
         }
         engine = newEngine
+        Log.i(TAG, "Mic ready in ${SystemClock.elapsedRealtime() - startedAt} ms")
         RecorderController.update {
             RecorderState(status = RecorderStatus.RECORDING, lastFile = it.lastFile, learningNoise = effects.noiseReductionEnabled)
         }
@@ -158,7 +162,7 @@ class RecorderService : LifecycleService() {
                 out
             }
             Graph.recordings.refresh()
-            RecorderController.update { RecorderState(lastFile = result ?: it.lastFile) }
+            RecorderController.update { RecorderState(lastFile = result ?: it.lastFile, awaitingName = result != null) }
             ServiceCompat.stopForeground(this@RecorderService, ServiceCompat.STOP_FOREGROUND_REMOVE)
             stopSelf()
         }
@@ -221,6 +225,7 @@ class RecorderService : LifecycleService() {
         private const val CHANNEL_ID = "recording"
         private const val NOTIFICATION_ID = 1
         private const val WAVEFORM_POINTS = 140
+        private const val TAG = "RecorderService"
 
         fun intent(context: Context, action: String): Intent =
             Intent(context, RecorderService::class.java).setAction(action)

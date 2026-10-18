@@ -31,6 +31,7 @@ import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Tune
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilledTonalIconButton
@@ -52,10 +53,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.background
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vocalis.recorder.audio.RecorderState
@@ -111,6 +109,7 @@ fun HomeScreen(
 ) {
     val active = state.status == RecorderStatus.RECORDING || state.status == RecorderStatus.PAUSED
     val finishing = state.status == RecorderStatus.FINISHING
+    val starting = state.status == RecorderStatus.STARTING
     val dialogs = remember { RecordingDialogState() }
 
     LazyColumn(
@@ -122,11 +121,8 @@ fun HomeScreen(
             ScreenHeader(
                 title = {
                     Text(
-                        buildAnnotatedString {
-                            append("Vocalis ")
-                            withStyle(SpanStyle(color = Vc.Lavender)) { append("Recorder") }
-                        },
-                        fontSize = 26.sp,
+                        "Vocalis",
+                        fontSize = 28.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = Vc.TextPrimary,
                     )
@@ -142,12 +138,12 @@ fun HomeScreen(
                 recording = active,
                 paused = state.status == RecorderStatus.PAUSED,
                 levels = state.waveform,
-                enabled = !finishing,
+                enabled = !finishing && !starting,
                 onClick = if (active) recorder.onStop else recorder.onRecord,
             )
         }
 
-        item { StatusBlock(state, effects, config, active, finishing) }
+        item { StatusBlock(state, effects, config, active, finishing, starting) }
 
         item {
             if (active) LiveCard(state, effects, recorder) else ModeStrip(effects, config, onPreset, onConfig)
@@ -185,11 +181,28 @@ fun HomeScreen(
 }
 
 @Composable
-private fun StatusBlock(state: RecorderState, effects: EffectSettings, config: RecorderConfig, active: Boolean, finishing: Boolean) {
+private fun StatusBlock(
+    state: RecorderState,
+    effects: EffectSettings,
+    config: RecorderConfig,
+    active: Boolean,
+    finishing: Boolean,
+    starting: Boolean,
+) {
     Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
         when {
+            starting -> {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    CircularProgressIndicator(Modifier.size(22.dp), color = Vc.Red, strokeWidth = 2.5.dp)
+                    Spacer(Modifier.width(12.dp))
+                    Text("Getting the mic ready…", fontSize = 24.sp, fontWeight = FontWeight.SemiBold, color = Vc.TextPrimary)
+                }
+                Spacer(Modifier.height(4.dp))
+                Text("Recording starts in a moment", fontSize = 16.sp, color = Vc.TextSecondary)
+            }
             finishing -> {
-                Text("Polishing loudness…", fontSize = 24.sp, fontWeight = FontWeight.SemiBold, color = Vc.TextPrimary)
+                Text("Saving your recording…", fontSize = 24.sp, fontWeight = FontWeight.SemiBold, color = Vc.TextPrimary)
+                Text("Balancing loudness  •  ${(state.finishingProgress * 100).toInt()}%", fontSize = 16.sp, color = Vc.TextSecondary)
                 Spacer(Modifier.height(10.dp))
                 LinearProgressIndicator(
                     progress = { state.finishingProgress },

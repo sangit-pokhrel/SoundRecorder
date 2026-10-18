@@ -41,7 +41,6 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -68,6 +67,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vocalis.recorder.data.Recording
+import com.vocalis.recorder.data.RecordingNames
 import com.vocalis.recorder.ui.theme.TabularNumbers
 import com.vocalis.recorder.ui.theme.Vc
 import java.text.SimpleDateFormat
@@ -285,13 +285,14 @@ class RecordingDialogState {
 @Composable
 fun RecordingDialogs(state: RecordingDialogState, actions: RecordingActions) {
     state.renaming?.let { rec ->
-        var name by remember(rec) { mutableStateOf(rec.name) }
+        var name by remember(rec) { mutableStateOf(RecordingNames.editablePart(rec.name)) }
+        val save = { actions.onRename(rec, name); state.renaming = null }
         AlertDialog(
             onDismissRequest = { state.renaming = null },
             containerColor = Vc.SurfaceHigh,
             title = { Text("Rename") },
-            text = { OutlinedTextField(value = name, onValueChange = { name = it }, singleLine = true) },
-            confirmButton = { TextButton(onClick = { actions.onRename(rec, name); state.renaming = null }) { Text("Rename") } },
+            text = { VocalisNameField(name, { name = it }, placeholder = "name", error = null, onDone = save) },
+            confirmButton = { TextButton(onClick = save, enabled = name.isNotBlank()) { Text("Rename") } },
             dismissButton = { TextButton(onClick = { state.renaming = null }) { Text("Cancel", color = Vc.TextSecondary) } },
         )
     }

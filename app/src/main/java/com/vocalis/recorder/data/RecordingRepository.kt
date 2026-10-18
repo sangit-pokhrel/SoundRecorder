@@ -92,9 +92,10 @@ class RecordingRepository(private val context: Context) {
     }
 
     fun newRecordingFiles(keepOriginal: Boolean): Pair<File, File?> {
-        var n = 1
-        while (File(directory, "Recording $n.wav").exists() || File(directory, "Recording $n.m4a").exists()) n++
-        val out = File(directory, "Recording $n.wav")
+        val name = RecordingNames.nextDefault { candidate ->
+            File(directory, "$candidate.wav").exists() || File(directory, "$candidate.m4a").exists()
+        }
+        val out = File(directory, "$name.wav")
         return out to if (keepOriginal) File(originals, out.name) else null
     }
 
@@ -119,9 +120,9 @@ class RecordingRepository(private val context: Context) {
     }.getOrNull().orEmpty()
 
     suspend fun rename(recording: Recording, newName: String): Boolean = withContext(Dispatchers.IO) {
-        val clean = newName.trim().replace(Regex("[\\\\/:*?\"<>|]"), "_")
-        if (clean.isEmpty()) return@withContext false
+        val clean = RecordingNames.fromUserInput(newName) ?: return@withContext false
         val target = File(directory, "$clean.${recording.file.extension}")
+        if (target == recording.file) return@withContext true
         if (target.exists()) return@withContext false
         val markers = markersFile(recording.file)
         if (!recording.file.renameTo(target)) return@withContext false

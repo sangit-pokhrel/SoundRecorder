@@ -10,8 +10,10 @@ import com.vocalis.recorder.audio.AacExporter
 import com.vocalis.recorder.audio.OfflineProcessor
 import com.vocalis.recorder.audio.RecorderController
 import com.vocalis.recorder.audio.RecorderService
+import com.vocalis.recorder.audio.RecorderStatus
 import com.vocalis.recorder.audio.WavReader
 import com.vocalis.recorder.data.Recording
+import com.vocalis.recorder.data.RecordingNames
 import com.vocalis.recorder.data.RecorderConfig
 import com.vocalis.recorder.dsp.EffectSettings
 import com.vocalis.recorder.dsp.Preset
@@ -74,8 +76,15 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     // ---- Recording ----
 
     fun startRecording() {
+        // The previous take must be named (or discarded) first.
+        if (recorder.value.status != RecorderStatus.IDLE || recorder.value.awaitingName) return
         closePlayer()
+        RecorderController.markStarting()
         RecorderService.send(context, RecorderService.ACTION_START)
+        viewModelScope.launch {
+            delay(START_TIMEOUT_MS)
+            RecorderController.cancelStartingIfStuck("Couldn't start the microphone. Please try again.")
+        }
     }
 
     fun stopRecording() = RecorderService.send(context, RecorderService.ACTION_STOP)
@@ -84,6 +93,43 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     fun addMarker() = RecorderService.send(context, RecorderService.ACTION_MARK)
     fun relearnNoise() = RecorderService.send(context, RecorderService.ACTION_RELEARN)
     fun clearError() = RecorderController.clearError()
+
+    // ---- Naming a fresh take ----
+
+    private val _nameError = MutableStateFlow<String?>(null)
+    val nameError: StateFlow<String?> = _nameError.asStateFlow()
+
+    /** Saves the just-recorded take as "Vocalis <name>". A blank name keeps the default. */
+    fun saveRecordingName(typed: String) {
+        val file = recorder.value.lastFile ?: return RecorderController.finishNaming()
+        viewModelScope.launch {
+            val suffix = RecordingNames.editablePart(typed)
+            if (suffix.isNotBlank()) {
+                // The library may not have picked up the brand-new file yet.
+                val rec = Graph.recordings.recordings.value.firstOrNull { it.file == file }
+                    ?: Graph.recordings.refresh().let { Graph.recordings.recordings.value.firstOrNull { it.file == file } }
+                if (rec != null && !Graph.recordings.rename(rec, "${RecordingNames.PREFIX} $suffix")) {
+                    _nameError.value = "A recording with that name already exists"
+                    return@launch
+                }
+            }
+            _nameError.value = null
+            RecorderController.finishNaming()
+        }
+    }
+
+    fun discardNewRecording() {
+        val file = recorder.value.lastFile
+        viewModelScope.launch {
+            Graph.recordings.recordings.value.firstOrNull { it.file == file }?.let { Graph.recordings.delete(it) }
+            _nameError.value = null
+            RecorderController.finishNaming()
+        }
+    }
+
+    fun clearNameError() {
+        _nameError.value = null
+    }
 
     // ---- Settings ----
 
@@ -259,5 +305,9 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     override fun onCleared() {
         closePlayer()
+    }
+
+    private companion object {
+        const val START_TIMEOUT_MS = 8_000L
     }
 }

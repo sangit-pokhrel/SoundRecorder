@@ -42,6 +42,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.vocalis.recorder.audio.RecorderStatus
 import com.vocalis.recorder.ui.MainViewModel
+import com.vocalis.recorder.ui.components.NameNewRecordingDialog
 import com.vocalis.recorder.ui.components.NavItem
 import com.vocalis.recorder.ui.components.RecordingActions
 import com.vocalis.recorder.ui.components.VocalisBottomBar
@@ -90,6 +91,7 @@ private fun VocalisRoot(vm: MainViewModel) {
     val recordings by vm.recordings.collectAsStateWithLifecycle()
     val player by vm.player.collectAsStateWithLifecycle()
     val task by vm.task.collectAsStateWithLifecycle()
+    val nameError by vm.nameError.collectAsStateWithLifecycle()
     var tab by rememberSaveable { mutableStateOf(TAB_HOME) }
     var showEffects by rememberSaveable { mutableStateOf(false) }
     var focusSearch by remember { mutableStateOf(false) }
@@ -211,6 +213,17 @@ private fun VocalisRoot(vm: MainViewModel) {
                 )
             }
         }
+    }
+
+    val justRecorded = recorder.lastFile
+    if (recorder.awaitingName && justRecorded != null) {
+        NameNewRecordingDialog(
+            defaultName = justRecorded.nameWithoutExtension,
+            error = nameError,
+            onTyping = vm::clearNameError,
+            onSave = vm::saveRecordingName,
+            onDiscard = vm::discardNewRecording,
+        )
     }
 
     if (player.recording != null) {
