@@ -1,0 +1,18 @@
+*.iml
+.gradle/
+/local.properties
+.idea/
+.DS_Store
+build/
+/captures
+.externalNativeBuild
+.cxx
+.kotlin/
+
+# Built APKs (publish them as GitHub Release assets instead)
+*.apk
+
+# Release signing secrets (keep a private backup!)
+keystore.properties
+*.jks
+*.keystore
